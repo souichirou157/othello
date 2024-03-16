@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import sys
+import time
 #コマンドプロンプトで実行 カレントディレクトリに移動して　py ファイル名.pyで実行
 
 #石が置いてないマス
@@ -466,6 +467,8 @@ board.Raw_Board = np.array([
 board.initMovable()
 '''
 board = Board()
+
+start = time.time()
 #手番ループ
 while True:
     board.screen()
@@ -477,7 +480,9 @@ while True:
 #CPU対人間
     if board.CurrentColor == board.humanColor:
         #人間の手
-        IN = input()
+        IN = board.computer()
+        print(IN)
+        print()
     else:
         IN = board.computer()
         print(IN)
@@ -524,12 +529,20 @@ print('白',count_white)
 #勝敗の判定、黒から白の数の差分を出す
 #黒から白を引いてので差が負の数なら白の勝ちになる
 game_end = count_black - count_white
+end = time.time()
 if game_end > 0:
     print('winner black!')
+    print(end-start)
 elif game_end < 0:
     print('winner white!')
+    print(end-start)
 else:
-    print('draw、、、')         
+    print('draw、、、')
+    print(end-start)
     
     
-    
+#実行速度
+#1)0.49738550186157227
+#2)0.07043170928955078
+#3)0.8399860858917236
+#4)0.2981703281402588    
