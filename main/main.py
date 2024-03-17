@@ -1,24 +1,35 @@
 from othello  import *
 import time
+from timeout_timer import timeout
+
 
 #手番ループ
 while True:
     board.screen()
     start = time.time()
-    
-    if board.CurrentColor == board.black :
-         print('黒の番です:', end = "")
-    else:
-         print('白の番です:', end = "") 
+ 
 #CPU対人間
     if board.CurrentColor == board.humanColor:
         #人間の手
+        print('黒が思考中.....')
         IN = board.computer()   #input()  human vs computer
-        print()
+        
     else:
+        print('白が思考中.....')
         IN = board.computer()
-        print(IN)
-    print()       
+    print()
+  
+    time.sleep(4) #↑が表示されてしばらく待つ
+       
+    if board.CurrentColor == board.color['black'] :
+         print('黒の一手が決まりました') # ,end=''
+         #ここにINをprintする
+         time.sleep(2)
+        
+    else:
+         print('白の一手が決まりました') # ,end =''
+         #ここにINをprintする
+         time.sleep(2)
 
     #座標の入力形式が正しいか確認
     if board.checkIN(IN):
@@ -54,8 +65,8 @@ while True:
 print()
 
 #1と0が入っているマスをカウントして集計する
-count_black = np.count_nonzero(board.Square_Board[:,:] == board.black)
-count_white = np.count_nonzero(board.Square_Board[:,:] == board.white)
+count_black = np.count_nonzero(board.Square_Board[:,:] == board.color['black'])
+count_white = np.count_nonzero(board.Square_Board[:,:] == board.color['white'])
 print('黒',count_black)
 print('白',count_white)
 

@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import sys
+from subroutine import *
 
 #人間の色 
 
@@ -29,15 +30,14 @@ class Board:
         self.Square_Board[self.board_size +1, :] = self.wall #9列目のすべての行は石が置けない
       
         #石の色
-        self.white = -1
-        self.black = 1 
+        self.color = {'white':-1,'black':1}
         
         
         #スタート時の石の配置　黒は１、白は　‐１
-        self.Square_Board[4,4] = self.white #-1
-        self.Square_Board[5,5] = self.white 
-        self.Square_Board[4,5] = self.black # 1
-        self.Square_Board[5,4] = self.black
+        self.Square_Board[4,4] = self.color['white'] #-1
+        self.Square_Board[5,5] = self.color['white'] 
+        self.Square_Board[4,5] = self.color['black'] # 1
+        self.Square_Board[5,4] = self.color['black']
         
         #順番
         self.Turns = 0
@@ -51,11 +51,11 @@ class Board:
         
            
         #順番が回っている色
-        self.CurrentColor = self.black
+        self.CurrentColor = random.choice(list(self.color.values()))
 
 
-        self.MovablePos = np.zeros((self.board_size + self.wall ,self.board_size  + self.wall),dtype =int)
-        self.MovableDir = np.zeros((self.board_size + self.wall , self.board_size + self.wall),dtype = int)
+        self.MovablePos = np.zeros((self.board_size + self.wall ,self.board_size  + self.wall),dtype =int)#手番開始前の状態
+        self.MovableDir = np.zeros((self.board_size + self.wall , self.board_size + self.wall),dtype = int)#手番終了時の状態
         
         #マスの座標
         self.IN_ALPHABET = ['a','b','c','d','e','f','g','h']
@@ -75,9 +75,9 @@ class Board:
    
         
         if HUMAN_COLOR == 'B':
-            self.humanColor = self.black
+            self.humanColor = self.color['black']
         elif HUMAN_COLOR == 'W':
-            self.humanColor = self.white
+            self.humanColor = self.color['white']
         else:
             print('引数にBかWを指定してください')
             sys.exit()     
@@ -87,115 +87,136 @@ class Board:
 #石をおいたときに裏返す方向を探すプログラム
     def checkMobility(self,x,y,color):
         
-        #指定の空きマス
         dir = 0
-        #既にある場合は置けないようにする
+        #[x,y]が0ではないなら、そのままdir(0)を返す
         if(self.Square_Board[x,y] != self.free):
             return dir
         
-        #左） ひっくりかえせるか探す
-        if(self.Square_Board[x -1 ,y] == - color):#一つ進んだ先に石があるか
+        
+        #左1つ目が反対の色か確かめる
+        if(self.Square_Board[x -1 ,y] == - color):
             
-            #上のスクリプトとこのスクリプトで挟んだ相手の石の数を確認している
-            x_temp = x - 2 #左横の一つ先の座標
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x - 2 
             y_temp = y
             
-            #医師の座標が白の間
+            #同じ色に当たるまで探索する
             while self.Square_Board[x_temp, y_temp] == -color:
                 x_temp -=1     
-            #石の色が変わるので、dirの石を裏返せる方向の情報の更新が起きる
+            #ひっり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] == color:
                 dir = dir|self.direction['LEFT']
             
-        #左上）ｘのインデックス　－１，ｙもー１
-        if(self.Square_Board[x -1, y -1] == -color): #進んだ先に相手の石があるか
+        #左上）1つ目が反対の色か確かめる
+        if(self.Square_Board[x -1, y -1] == -color): 
             
-            x_temp = x-2 #左横の一つ先の座標座標
-            y_temp = y-2 #上方向の一つ先の座標
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x-2 
+            y_temp = y-2 
             
-            #相手の石の数だけ石を返す、プログラムは上方向から石を探している
+            ##同じ色に当たるまで探索する
             while self.Square_Board[x_temp,y_temp] == -color:
                 x_temp -=1
                 y_temp -=1
-            # 石の色がかわるので、ｄｉｒの石を裏返せる方向の情報が更新される
+                
+           #ひっくり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] ==   color:
                 dir = dir|self.direction['UPPER_LEFT']
         
-        #上）真上に行くのでｙのインデックス－１
-        if(self.Square_Board[x, y -1] == -color): #進んだ先に相手の石があるか
+        #上)1つ目が反対の色か確かめる
+        if(self.Square_Board[x, y -1] == -color): 
             
+            
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
             x_temp = x
-            y_temp = y-2 #上方向の一つ先の座標
-            #相手の石の数だけ返す
+            y_temp = y-2 
+            
             while self.Square_Board[x_temp,y_temp] == -color:
                 y_temp -= 1
-            #石の色が変わるので、ｄｉｒの石を裏返せる方向の情報が更新
+            
+            #ひっくり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] == color:      
                 dir = dir|self.direction['UPEER']
         
-        #右上　右横に進む、ｘのインデックス＋１ｙは下がる
-        if(self.Square_Board[x +1,y-1] == -color): #進んだ先に相手の石があるか
+        #右上)1つ目が反対の色か確かめる
+        if(self.Square_Board[x +1,y-1] == -color): 
             
-            x_temp = x + 2 #右横の一つ先の座標
-            y_temp = y - 2 #上方向の一つ先の座標
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x + 2 
+            y_temp = y - 2 
             
-            #相手の石の数だけ返す
+            
             while self.Square_Board[x_temp,y_temp] == -color:
                 x_temp +=1
                 y_temp -=1
-            #石の色が変わるので、ｄｉｒの石を裏返せる方向の情報が更新される
+                
+            #ひっくり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] ==   color:
                 dir = dir|self.direction['UPEER_RIGHT']
             
-        # 右　横に行くだけ、ｘのインデックスが＋１
-        if(self.Square_Board[x +1 ,y]==  -color):#進んだ先に相手の石があるか
+        # 右)1つ目が反対の色か確かめる
+        if(self.Square_Board[x +1 ,y]==  -color):
             
-            x_temp = x + 2 #右横の一つ先の座標
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x + 2 
             y_temp = y     
-            #相手の石の数だけ返す
+        
+            
             while self.Square_Board[x_temp,y_temp] ==  -color:
                 x_temp +=1
-            #石の色がかわるので、ｄｉｒの石を裏返せる方向の情報が更新される
+            
+            
+               #ひっくり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] == color:
                 dir = dir | self.direction['RIGHT']
                 
-        #右下）　右横に行く、ｘのインデックス＋１、下に一つ進む、ｙのインデックスが＋１　
-        if(self.Square_Board[x + 1, y + 1 ]== -color): #進んだ先に相手の石があるか
+        #右下）1つ目が反対の色か確かめる　
+        if(self.Square_Board[x + 1, y + 1 ]== -color): 
             
-            x_temp = x + 2 #右横の一つ先の座標
-            y_temp = y + 2 #下の一つ先の座標
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x + 2 
+            y_temp = y + 2 
             
-            #相手の石の数だけ返す
+        
             while self.Square_Board[x_temp,y_temp] == -color:
                 x_temp +=1
                 y_temp +=1
-            #石の色がかわるので、ｄｉｒの石を裏返せる情報の更新がされる
+            
+               #ひっくり返せる石が見つからなくなったらdirを更新
             if self.Square_Board[x_temp,y_temp] == color:
                 dir = dir|self.direction['LOWER_RIGHT']
         
-        #下）　真下に行くので　ｙのみインデックスが＋１
-        if(self.Square_Board[x, y + 1]==-color): #進んだ先に相手の石があるか
-            x_temp = x
-            y_temp = y + 2 #石を置いた1つ先の場所を代入 
+        #下)1つ目が反対の色か確かめる
+        if(self.Square_Board[x, y + 1]==-color): 
             
-            #相手の石の数だけ返す
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x        
+            y_temp = y + 2 
+           
+           
+           
             while self.Square_Board[x_temp,y_temp] == -color:
                 y_temp +=1
-            #石の色がかわるので、ｄｉｒの石を裏返せる情報が更新される
+            
+            
+               #ひっくり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] == color:
                 dir = dir|self.direction['LOWER']    
                 
-        # 左下）左横　ｘのインデックス　―１　ｙはインデックス＋１
-        if(self.Square_Board[x-1, y + 1 ]==-color): #進んだ先に相手の石があるか        
+        # 左下）1つ目が反対の色か確かめる
+        if(self.Square_Board[x-1, y + 1 ]==-color): 
+           
+            #1つ目が反対の色なら　更新用の変数に2つ先の値をセットしてループに入る
+            x_temp = x -2   
+            y_temp = y +2 
             
-            #どちらも置いたマスの一つ先の座標
-            x_temp = x -2 #左横の一つ先
-            y_temp = y +2 #下方向の一つ先
-            
-            #相手の石の数だけ返す
+        
             while self.Square_Board[x_temp,y_temp] == -color:
                 x_temp  -=1
                 y_temp  +=1 
+        
+        
+           #ひっり返せる石が見つからなくなったら　dirを更新
             if self.Square_Board[x_temp,y_temp] == color:
                 dir = dir|self.direction['LOWER_LEFT']
         
@@ -204,8 +225,7 @@ class Board:
         
         
                                   
-    #盤面の反映）CurrentColorはーをかけると反対の色になる,
-    #{黒：１,白：－１}　 2進数は if文右横にそれぞれ表示 
+    
     def flipDiscs(self,x,y):
     #石を置く
         self.Square_Board[x,y] = self.CurrentColor
@@ -215,7 +235,7 @@ class Board:
         dir = self.MovableDir[x,y]
         
         #１左)#MovableDirの2進数と成立しているか確認する
-        if dir & self.direction['LEFT']:
+        if dir and self.direction['LEFT']:
             x_temp = x -1  # 00000010
             
         #成立したら色を更新する　＊-を成立時のCurrentcolorに掛け代入し直して更新される
@@ -226,7 +246,7 @@ class Board:
                 x_temp -=1    
         
         #２左上) MovableDirの2進数と成立している確認
-        if dir & self.direction['UPPER_LEFT']:
+        if dir and self.direction['UPPER_LEFT']:
             x_temp = x -1
             y_temp = y -1  # 00000010
             
@@ -239,7 +259,7 @@ class Board:
                 y_temp -= 1
         
         #４上）MovableDirの2進数と成立している成立するか確認
-        if dir & self.direction['UPEER']:
+        if dir and self.direction['UPEER']:
             
             y_temp = y -1 #00000100
             
@@ -251,7 +271,7 @@ class Board:
                 y_temp -= 1            
        
         #8) 右上）MovableDirの2進数と成立しているか確認 
-        if dir & self.direction['UPEER_RIGHT']:
+        if dir and self.direction['UPEER_RIGHT']:
             
             x_temp = x + 1
             y_temp = y - 1   #00001000、右上
@@ -264,7 +284,7 @@ class Board:
                 y_temp -= 1
         
         #16)右）MovableDirの2進数と成立しているか確認
-        if dir & self.direction['RIGHT']:
+        if dir and self.direction['RIGHT']:
             
             x_temp = x + 1 #00010000
         
@@ -275,7 +295,7 @@ class Board:
                 x_temp += 1    
         
         #32右下　MovableDirの2進数と成立しているか確認
-        if dir & self.direction['LOWER_RIGHT']:
+        if dir and self.direction['LOWER_RIGHT']:
             
             x_temp = x + 1 #00100000
             y_temp = y + 1
@@ -290,7 +310,7 @@ class Board:
                  y_temp +=1     
         
         #64)下） MovableDirの2進数が成立しているか確認
-        if dir & self.direction['LOWER']:
+        if dir and self.direction['LOWER']:
 
             y_temp = y + 1 #01000000
         #成立したら色を更新する　＊ーを成立時のCurrentcolorに掛け、代入して更新される
@@ -302,7 +322,7 @@ class Board:
                 y_temp +=1    
             
         #128) 左下）MovableDirの２進数が成立しているか確認
-        if dir & self.direction['LOWER_LEFT']:
+        if dir and self.direction['LOWER_LEFT']:
             
             x_temp = x - 1
             y_temp = y + 1   #100000000
@@ -320,14 +340,7 @@ class Board:
     
     def move(self,x,y):
         
-    
-
-        if x < 1 or self.board_size < x:
-            return False
-        if y < 1 or self.board_size < y:
-            return False
-        if self.MovablePos[x,y] == 0:
-            return False
+        CheckBoard(self.board_size,x,y,self.MovablePos)
      
         #石を裏返す
         self.flipDiscs(x,y)
@@ -344,7 +357,7 @@ class Board:
         return True
         
         
-    #MovablePos, MovableDirの更新    
+    #手番終了毎に、石の配置情報を更新する    
     def initMovable(self):
             
         #MovablePosの初期化（すべてFalseにする）
@@ -354,10 +367,10 @@ class Board:
         for x in range(1, self.board_size +1):
             for y in range(1, self.board_size+1):
                 
-                #checkMobility関数の実行
+                #ひっくり返した結果の情報を格納する
                 dir = self.checkMobility(x,y,self.CurrentColor)
             
-                #各マスのMobavleDirにそれぞれのdirを代入
+                #手番終了時の状態に盤面を更新
                 self.MovableDir[x,y] = dir
             
                 #dirが０でないならMovablePosにTrueを代入
@@ -419,9 +432,9 @@ class Board:
                 #各表示の設定
                 if grid == self.free:
                     print('□', end = " ")
-                elif grid == self.white:
+                elif grid == self.color['white']:
                     print('●', end = " ")
-                elif grid == self.black:
+                elif grid == self.color['black']:
                     print('○', end = " ")
             print()                
 
@@ -444,10 +457,10 @@ class Board:
         grids = np.where(self.MovablePos == 1)
         
         #置けるマス[0]をランダムに選ぶ  lenで指定の要素のある範囲のみを選択肢にしている
-        random_chosen_index= random.randrange(len(grids[0])) 
+        random_index= random.randrange(len(grids[0])) 
         
-        x_line = grids[0][random_chosen_index]
-        y_line = grids[1][random_chosen_index]
+        x_line = grids[0][random_index]
+        y_line = grids[1][random_index]
         
         #選んだマスの座標を返す
         return self.IN_ALPHABET[x_line-1] + self.IN_NUMBER[y_line-1] 
